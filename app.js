@@ -8,6 +8,7 @@ const ExpressError = require('./utils/ExpressError');
 const methodOverride = require('method-override');
 const Campground = require('./models/campground');
 
+
 mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp', {
     useNewUrlParser: true,
     useUnifiedTopology: true
