@@ -13,6 +13,7 @@ ImageSchema.virtual('thumbnail').get(function () {
     return this.url.replace('/upload', '/upload/w_200');
 });
 
+const opts = { toJSON: { virtuals: true } };
 
 const CampgroundSchema = new Schema({ 
     title: String,
@@ -41,7 +42,12 @@ const CampgroundSchema = new Schema({
             ref: 'Review'
         }
     ]
+}, opts);
+
+CampgroundSchema.virtual('properties.popUpMarkup').get(function () {
+    return `<strong><a href="/campgrounds/${this._id}">${this.title}</a></strong><p>${this.geometry.coordinates[1]},${this.geometry.coordinates[0]}</p>`;
 });
+
 
 CampgroundSchema.post('findOneAndDelete', async function (doc) {
     if(doc){
