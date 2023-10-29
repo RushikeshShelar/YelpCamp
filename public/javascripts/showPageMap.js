@@ -10,10 +10,12 @@ const map = new mapboxgl.Map({
 new mapboxgl.Marker({ color: 'red' })
     .setLngLat(campground.geometry.coordinates)
     .setPopup(
-        new mapboxgl.Popup({ offset: 10})
+        new mapboxgl.Popup({ offset: 10 })
             .setHTML(
-        `<h3>${campground.title}</h3>
+                `<h3>${campground.title}</h3>
             ${campground.location}`
             )
     )
     .addTo(map);
+
+map.addControl(new mapboxgl.NavigationControl());
