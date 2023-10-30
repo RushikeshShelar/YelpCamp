@@ -2,6 +2,7 @@ if(process.env.NODE_ENV !== "production") {
     require('dotenv').config();
 };
 
+
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -13,12 +14,21 @@ const methodOverride = require('method-override');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
 
 const userRoutes = require('./routes/users');
 const campgroundsRoutes = require('./routes/campgrounds'); 
 const reviewsRoutes = require('./routes/reviews');
 
-mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp', {
+const MongoStore = require('connect-mongo');
+
+// const dbURL = process.env.DB_URL; // cloud db (MONGO ATLAS)
+const dbURL = process.env.DB_URL || 'mongodb://127.0.0.1:27017/yelp-camp';
+
+
+// 'mongodb://127.0.0.1:27017/yelp-camp' // local db
+mongoose.connect(dbURL, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -41,13 +51,30 @@ app.set('views', path.join(__dirname, 'views'))
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(mongoSanitize());
+
+const secret = process.env.SECRET || 'thisshouldbeabettersecret!';
+
+const store = MongoStore.create({
+    mongoUrl: dbURL,
+    touchAfter: 24 * 60 * 60,
+    crypto: {
+        secret
+    }
+});
+store.on("error", function(e){
+    console.log("SESSION STORE ERROR", e);
+});
 
 const sessionConfig = {
+    store,
+    name: 'aadi',
     secret: 'RushikeshShelar',
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
+        // secure: true, //only works on https
         expires: Date.now() + 1000 * 60 * 60 *24 * 7,   
         maxAge: 1000 * 60 * 60 *24 * 7
     }
@@ -55,6 +82,7 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 app.use(flash());
+app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(passport.initialize());
 app.use(passport.session());  
