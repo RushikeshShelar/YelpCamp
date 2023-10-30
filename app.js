@@ -2,6 +2,7 @@ if(process.env.NODE_ENV !== "production") {
     require('dotenv').config();
 };
 
+
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -20,7 +21,14 @@ const userRoutes = require('./routes/users');
 const campgroundsRoutes = require('./routes/campgrounds'); 
 const reviewsRoutes = require('./routes/reviews');
 
-mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp', {
+const MongoStore = require('connect-mongo');
+
+// const dbURL = process.env.DB_URL; // cloud db (MONGO ATLAS)
+const dbURL = process.env.DB_URL || 'mongodb://127.0.0.1:27017/yelp-camp';
+
+
+// 'mongodb://127.0.0.1:27017/yelp-camp' // local db
+mongoose.connect(dbURL, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -45,7 +53,21 @@ app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(mongoSanitize());
 
+const secret = process.env.SECRET || 'thisshouldbeabettersecret!';
+
+const store = MongoStore.create({
+    mongoUrl: dbURL,
+    touchAfter: 24 * 60 * 60,
+    crypto: {
+        secret
+    }
+});
+store.on("error", function(e){
+    console.log("SESSION STORE ERROR", e);
+});
+
 const sessionConfig = {
+    store,
     name: 'aadi',
     secret: 'RushikeshShelar',
     resave: false,
